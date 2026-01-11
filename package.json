@@ -45,6 +45,7 @@
 		"vite-plugin-devtools-json": "^1.0.0"
 	},
 	"dependencies": {
-		"@fontsource-variable/geist": "^5.2.8"
+		"@fontsource-variable/geist": "^5.2.8",
+		"convex": "^1.31.3"
 	}
 }
