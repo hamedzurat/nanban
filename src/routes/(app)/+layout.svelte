@@ -1,21 +1,31 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { goto } from '$app/navigation';
-	import { loadSession, session } from '$lib/session';
+  import { onMount } from 'svelte';
 
-	const { children } = $props();
+  import { goto } from '$app/navigation';
 
-	onMount(() => {
-		// Load once on first mount
-		loadSession();
+  import AppSidebar from '$lib/components/app-sidebar.svelte';
+  import * as Sidebar from '$lib/components/ui/sidebar/index.js';
+  import { loadSession, session } from '$lib/session';
 
-		// Redirect if not logged in
-		const unsub = session.subscribe((s) => {
-			if (!s) goto('/login');
-		});
+  const { children } = $props();
 
-		return unsub;
-	});
+  onMount(() => {
+    loadSession();
+    const unsub = session.subscribe((s) => {
+      if (!s) goto('/login');
+    });
+    return unsub;
+  });
 </script>
 
-{@render children()}
+<Sidebar.Provider>
+  <AppSidebar />
+
+  <main class="flex-1">
+    <div class="p-2">
+      <Sidebar.Trigger />
+    </div>
+
+    {@render children()}
+  </main>
+</Sidebar.Provider>
