@@ -14,6 +14,7 @@
   import { Input } from '$lib/components/ui/input/index.js';
   import { Label } from '$lib/components/ui/label/index.js';
   import * as Select from '$lib/components/ui/select/index.js';
+  import { Skeleton } from '$lib/components/ui/skeleton/index.js';
   import { Switch } from '$lib/components/ui/switch/index.js';
   import { Textarea } from '$lib/components/ui/textarea/index.js';
   import { api, type Id } from '$lib/convex/api';
@@ -100,11 +101,9 @@
     </Card.Header>
 
     <Card.Content class="flex-1 space-y-6 overflow-auto">
-      {#if membersQ.isLoading}
-        <div class="text-sm text-muted-foreground">Loading members…</div>
-      {:else if membersQ.error}
+      {#if membersQ.error}
         <div class="text-sm text-destructive">{membersQ.error.toString()}</div>
-      {:else if !membersQ.data?.project}
+      {:else if !membersQ.isLoading && !membersQ.data?.project}
         <div class="text-sm text-destructive">Project not found.</div>
       {:else}
         <form class="space-y-4" onsubmit={submit}>
@@ -148,10 +147,16 @@
                 <Select.Group>
                   <Select.Label>Project members</Select.Label>
 
-                  {#if (membersQ.data.members?.length ?? 0) === 0}
+                  {#if membersQ.isLoading}
+                    <div class="flex flex-col gap-2 p-2">
+                      <Skeleton class="h-8 w-full" />
+                      <Skeleton class="h-8 w-full" />
+                      <Skeleton class="h-8 w-full" />
+                    </div>
+                  {:else if (membersQ.data?.members?.length ?? 0) === 0}
                     <div class="px-2 py-2 text-sm text-muted-foreground">No members yet.</div>
                   {:else}
-                    {#each membersQ.data.members as m (m._id)}
+                    {#each membersQ.data!.members! as m (m._id)}
                       <Select.Item value={`${m._id}`} label={m.name}>
                         <div class="flex items-center gap-2">
                           <Avatar.Root class="size-6">
@@ -174,7 +179,12 @@
           <div class="space-y-2">
             <Label>Complete by</Label>
             <div class="rounded-md border p-2">
-              <Calendar type="single" bind:value={completeByDate} minValue={today(getLocalTimeZone())} />
+              <Calendar
+                type="single"
+                bind:value={completeByDate}
+                minValue={today(getLocalTimeZone())}
+                captionLayout="dropdown"
+              />
             </div>
             {#if completeByDate}
               <div class="text-xs text-muted-foreground">
