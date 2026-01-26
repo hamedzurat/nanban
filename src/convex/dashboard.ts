@@ -50,7 +50,7 @@ export const company = query({
       const memberUsers = [];
       for (const m of members) {
         const u = await ctx.db.get(m.userID as Id<'users'>);
-        if (u) memberUsers.push({ _id: u._id, name: u.name, avatarURL: u.avatarURL ?? null });
+        if (u) memberUsers.push({ _id: u._id, name: u.name, email: u.email, avatarURL: u.avatarURL ?? null });
       }
 
       result.push({
