@@ -8,7 +8,9 @@
 
   const { children } = $props();
 
-  setupConvex(PUBLIC_CONVEX_URL);
+  const convexUrl = PUBLIC_CONVEX_URL || 'https://capable-pelican-238.convex.cloud';
+  $inspect(convexUrl);
+  setupConvex(convexUrl);
 </script>
 
 <ModeWatcher />
