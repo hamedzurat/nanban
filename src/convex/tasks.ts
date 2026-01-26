@@ -39,7 +39,7 @@ export const create = mutation({
     status: Status,
     isImportant: v.boolean(),
     isUrgent: v.boolean(),
-    completeBy: v.optional(v.number()),
+    completeBy: v.number(),
   },
   handler: async (ctx, args) => {
     return await ctx.db.insert('tasks', args);
@@ -90,7 +90,7 @@ export const listForKanban = query({
         status: t.status,
         isImportant: t.isImportant,
         isUrgent: t.isUrgent,
-        completeBy: t.completeBy ?? null,
+        completeBy: t.completeBy,
         assignee: assignee ? { _id: assignee._id, name: assignee.name, avatarURL: assignee.avatarURL ?? null } : null,
         reporter: reporter ? { _id: reporter._id, name: reporter.name } : null,
       });
@@ -136,7 +136,7 @@ export const createBySlug = mutation({
     reporterID: v.id('users'),
     isImportant: v.boolean(),
     isUrgent: v.boolean(),
-    completeBy: v.optional(v.number()),
+    completeBy: v.number(),
   },
   handler: async (ctx, args) => {
     const org = await ctx.db
@@ -236,15 +236,69 @@ export const listForTable = query({
   },
 });
 
+export const countForProject = query({
+  args: {
+    orgSlug: v.string(),
+    projectSlug: v.string(),
+    status: v.optional(Status),
+    quadrant: v.optional(Quadrant),
+    assigneeID: v.optional(v.id('users')),
+    reporterID: v.optional(v.id('users')),
+  },
+  handler: async (ctx, { orgSlug, projectSlug, status, quadrant, assigneeID, reporterID }) => {
+    const org = await ctx.db
+      .query('orgs')
+      .withIndex('by_slug', (q) => q.eq('slug', orgSlug))
+      .first();
+    if (!org) return { count: 0, project: null };
+
+    const project = await ctx.db
+      .query('projects')
+      .withIndex('by_org_slug', (q) => q.eq('orgID', org._id).eq('slug', projectSlug))
+      .first();
+    if (!project) return { count: 0, project: null };
+
+    let q = ctx.db.query('tasks').withIndex('by_project', (qq) => qq.eq('projectID', project._id));
+
+    if (status) {
+      q = q.filter((qq) => qq.eq(qq.field('status'), status));
+    }
+
+    if (assigneeID) {
+      q = q.filter((qq) => qq.eq(qq.field('assigneeID'), assigneeID));
+    }
+
+    if (reporterID) {
+      q = q.filter((qq) => qq.eq(qq.field('reporterID'), reporterID));
+    }
+
+    if (quadrant && quadrant !== 'all') {
+      q = q.filter((qq) => {
+        const imp = qq.field('isImportant');
+        const urg = qq.field('isUrgent');
+        if (quadrant === 'do') return qq.and(qq.eq(imp, true), qq.eq(urg, true));
+        if (quadrant === 'decide') return qq.and(qq.eq(imp, true), qq.eq(urg, false));
+        if (quadrant === 'delegate') return qq.and(qq.eq(imp, false), qq.eq(urg, true));
+        return qq.and(qq.eq(imp, false), qq.eq(urg, false));
+      });
+    }
+
+    const tasks = await q.collect();
+    return { count: tasks.length, project: { _id: project._id, name: project.name } };
+  },
+});
+
 export const listForTablePaginated = query({
   args: {
     orgSlug: v.string(),
     projectSlug: v.string(),
     status: v.optional(Status),
     quadrant: v.optional(Quadrant),
+    assigneeID: v.optional(v.id('users')),
+    reporterID: v.optional(v.id('users')),
     paginationOpts: paginationOptsValidator,
   },
-  handler: async (ctx, { orgSlug, projectSlug, status, quadrant, paginationOpts }) => {
+  handler: async (ctx, { orgSlug, projectSlug, status, quadrant, assigneeID, reporterID, paginationOpts }) => {
     const org = await ctx.db
       .query('orgs')
       .withIndex('by_slug', (q) => q.eq('slug', orgSlug))
@@ -261,6 +315,14 @@ export const listForTablePaginated = query({
 
     if (status) {
       q = q.filter((qq) => qq.eq(qq.field('status'), status));
+    }
+
+    if (assigneeID) {
+      q = q.filter((qq) => qq.eq(qq.field('assigneeID'), assigneeID));
+    }
+
+    if (reporterID) {
+      q = q.filter((qq) => qq.eq(qq.field('reporterID'), reporterID));
     }
 
     if (quadrant && quadrant !== 'all') {
@@ -280,6 +342,7 @@ export const listForTablePaginated = query({
     const out = [];
     for (const t of page) {
       const assignee = await ctx.db.get(t.assigneeID);
+      const reporter = await ctx.db.get(t.reporterID);
       out.push({
         _id: t._id,
         title: t.title,
@@ -287,7 +350,9 @@ export const listForTablePaginated = query({
         status: t.status,
         isImportant: t.isImportant,
         isUrgent: t.isUrgent,
+        completeBy: t.completeBy,
         assignee: assignee ? { _id: assignee._id, name: assignee.name, avatarURL: assignee.avatarURL ?? null } : null,
+        reporter: reporter ? { _id: reporter._id, name: reporter.name, avatarURL: reporter.avatarURL ?? null } : null,
       });
     }
 
