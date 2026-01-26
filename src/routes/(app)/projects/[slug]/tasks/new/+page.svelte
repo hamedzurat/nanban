@@ -1,11 +1,15 @@
 <script lang="ts">
+  import { CalendarDate, getLocalTimeZone, today } from '@internationalized/date';
   import { useConvexClient, useQuery } from 'convex-svelte';
+  import DOMPurify from 'isomorphic-dompurify';
+  import { marked } from 'marked';
 
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
 
   import * as Avatar from '$lib/components/ui/avatar/index.js';
   import { Button } from '$lib/components/ui/button/index.js';
+  import { Calendar } from '$lib/components/ui/calendar/index.js';
   import * as Card from '$lib/components/ui/card/index.js';
   import { Input } from '$lib/components/ui/input/index.js';
   import { Label } from '$lib/components/ui/label/index.js';
@@ -27,14 +31,21 @@
   let description = $state('');
   let isImportant = $state(false);
   let isUrgent = $state(false);
+  let completeByDate = $state<CalendarDate | undefined>(undefined);
 
-  let assignee = $state<string>(''); // store as string for Select value
+  let assignee = $state<string>('');
   let saving = $state(false);
   let error = $state<string | null>(null);
 
   function assigneeLabel() {
     const list = membersQ.data?.members ?? [];
     return list.find((m) => `${m._id}` === assignee)?.name ?? 'Select assignee';
+  }
+
+  function safeHtml(md: string) {
+    const html = marked.parse(md) as string;
+
+    return DOMPurify.sanitize(html);
   }
 
   async function submit(e: SubmitEvent) {
@@ -56,6 +67,9 @@
 
     saving = true;
     try {
+      // Convert CalendarDate to timestamp if present
+      const completeBy = completeByDate ? completeByDate.toDate(getLocalTimeZone()).getTime() : undefined;
+
       await client.mutation(api.tasks.createBySlug, {
         orgSlug: 'zurat',
         projectSlug: projectSlug(),
@@ -65,6 +79,7 @@
         reporterID: $session.userId,
         isImportant,
         isUrgent,
+        completeBy,
       });
 
       await goto(`/projects/${projectSlug()}/kanban`);
@@ -76,14 +91,15 @@
   }
 </script>
 
-<div class="p-6">
-  <Card.Root class="max-w-2xl">
+<div class="grid h-full gap-6 p-6 lg:grid-cols-2">
+  <!-- Left: Form -->
+  <Card.Root class="flex h-full flex-col overflow-auto">
     <Card.Header>
       <Card.Title>Create task</Card.Title>
       <Card.Description>Delegate a new task to a team member.</Card.Description>
     </Card.Header>
 
-    <Card.Content class="space-y-6">
+    <Card.Content class="flex-1 space-y-6 overflow-auto">
       {#if membersQ.isLoading}
         <div class="text-sm text-muted-foreground">Loading members…</div>
       {:else if membersQ.error}
@@ -98,8 +114,8 @@
           </div>
 
           <div class="space-y-2">
-            <Label for="desc">Description</Label>
-            <Textarea id="desc" rows={5} bind:value={description} placeholder="Details…" />
+            <Label for="desc">Description (Markdown)</Label>
+            <Textarea id="desc" rows={6} bind:value={description} placeholder="Details…" />
           </div>
 
           <div class="grid gap-4 sm:grid-cols-2">
@@ -154,6 +170,19 @@
             </Select.Root>
           </div>
 
+          <!-- Complete By Date: Inline Calendar -->
+          <div class="space-y-2">
+            <Label>Complete by</Label>
+            <div class="rounded-md border p-2">
+              <Calendar type="single" bind:value={completeByDate} minValue={today(getLocalTimeZone())} />
+            </div>
+            {#if completeByDate}
+              <div class="text-xs text-muted-foreground">
+                Due: {completeByDate.toString()}
+              </div>
+            {/if}
+          </div>
+
           {#if error}
             <div class="text-sm text-destructive">{error}</div>
           {/if}
@@ -168,6 +197,30 @@
           </div>
         </form>
       {/if}
+    </Card.Content>
+  </Card.Root>
+
+  <!-- Right: Live Preview -->
+  <Card.Root class="flex h-full flex-col">
+    <Card.Header>
+      <Card.Title>Preview</Card.Title>
+      <Card.Description>Live preview of task description</Card.Description>
+    </Card.Header>
+
+    <Card.Content class="flex-1 overflow-auto">
+      <div class="prose prose-sm max-w-none rounded-md border bg-background p-4 dark:prose-invert">
+        {#if title.trim()}
+          <h2>{title}</h2>
+        {:else}
+          <h2 class="text-muted-foreground">Task title…</h2>
+        {/if}
+
+        {#if description.trim()}
+          {@html safeHtml(description)}
+        {:else}
+          <p class="text-muted-foreground">Start typing to see preview…</p>
+        {/if}
+      </div>
     </Card.Content>
   </Card.Root>
 </div>

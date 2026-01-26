@@ -39,6 +39,7 @@ export const create = mutation({
     status: Status,
     isImportant: v.boolean(),
     isUrgent: v.boolean(),
+    completeBy: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     return await ctx.db.insert('tasks', args);
@@ -89,6 +90,7 @@ export const listForKanban = query({
         status: t.status,
         isImportant: t.isImportant,
         isUrgent: t.isUrgent,
+        completeBy: t.completeBy ?? null,
         assignee: assignee ? { _id: assignee._id, name: assignee.name, avatarURL: assignee.avatarURL ?? null } : null,
         reporter: reporter ? { _id: reporter._id, name: reporter.name } : null,
       });
@@ -134,6 +136,7 @@ export const createBySlug = mutation({
     reporterID: v.id('users'),
     isImportant: v.boolean(),
     isUrgent: v.boolean(),
+    completeBy: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const org = await ctx.db
@@ -157,9 +160,31 @@ export const createBySlug = mutation({
       status: 'todo',
       isImportant: args.isImportant,
       isUrgent: args.isUrgent,
+      completeBy: args.completeBy,
     });
 
     return { taskID };
+  },
+});
+
+// Admin-triggered mutation: move overdue todo tasks to backlog
+export const moveOverdueToBacklog = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const now = Date.now();
+    const todoTasks = await ctx.db
+      .query('tasks')
+      .filter((q) => q.eq(q.field('status'), 'todo'))
+      .collect();
+
+    let movedCount = 0;
+    for (const task of todoTasks) {
+      if (task.completeBy && task.completeBy < now) {
+        await ctx.db.patch(task._id, { status: 'backlog' });
+        movedCount++;
+      }
+    }
+    return { movedCount };
   },
 });
 

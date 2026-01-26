@@ -49,6 +49,7 @@ export default defineSchema({
     ),
     isImportant: v.boolean(),
     isUrgent: v.boolean(),
+    completeBy: v.optional(v.number()), // Due date timestamp
   })
     .index('by_project', ['projectID'])
     .index('by_project_status', ['projectID', 'status'])
