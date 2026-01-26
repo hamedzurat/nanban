@@ -1,5 +1,8 @@
 <script lang="ts">
   import { useConvexClient, useQuery } from 'convex-svelte';
+  import { formatDistanceToNow } from 'date-fns';
+  import DOMPurify from 'isomorphic-dompurify';
+  import { marked } from 'marked';
 
   import { page } from '$app/state';
 
@@ -9,6 +12,7 @@
   import * as ContextMenu from '$lib/components/ui/context-menu/index.js';
   import * as HoverCard from '$lib/components/ui/hover-card/index.js';
   import { ScrollArea } from '$lib/components/ui/scroll-area/index.js';
+  import { Skeleton } from '$lib/components/ui/skeleton/index.js';
   import { api, type Id } from '$lib/convex/api';
 
   const client = useConvexClient();
@@ -36,7 +40,7 @@
   }
 
   function priorityLabel(t: { isImportant: boolean; isUrgent: boolean }) {
-    if (t.isImportant && t.isUrgent) return 'Important + Urgent';
+    if (t.isImportant && t.isUrgent) return 'Important & Urgent';
     if (t.isImportant) return 'Important';
     if (t.isUrgent) return 'Urgent';
     return 'Normal';
@@ -53,6 +57,11 @@
   async function toggleUrgent(taskID: Id<'tasks'>, current: boolean) {
     await client.mutation(api.tasks.update, { taskID, isUrgent: !current });
   }
+
+  function renderDescription(text: string) {
+    const html = marked.parse(text) as string;
+    return DOMPurify.sanitize(html);
+  }
 </script>
 
 <div class="space-y-4 p-6">
@@ -68,7 +77,25 @@
   </div>
 
   {#if kanban.isLoading}
-    <div class="text-sm text-muted-foreground">Loading…</div>
+    <div class="grid gap-4 lg:grid-cols-5">
+      {#each columns as col}
+        <div class="flex h-[60dvh] flex-col rounded-lg border bg-card">
+          <div class="flex items-center justify-between p-3">
+            <Skeleton class="h-4 w-20" />
+            <Skeleton class="h-5 w-8 rounded-full" />
+          </div>
+          <div class="space-y-3 p-3 pt-0">
+            <Skeleton class="h-24 w-full" />
+            <Skeleton class="h-24 w-full" />
+            <Skeleton class="h-24 w-full" />
+            <Skeleton class="h-24 w-full" />
+            <Skeleton class="h-24 w-full" />
+            <Skeleton class="h-24 w-full" />
+            <Skeleton class="h-24 w-full" />
+          </div>
+        </div>
+      {/each}
+    </div>
   {:else if kanban.error}
     <div class="text-sm text-destructive">{kanban.error.toString()}</div>
   {:else if !kanban.data?.project}
@@ -107,27 +134,40 @@
                               <Badge variant="outline" class="shrink-0">{priorityLabel(t)}</Badge>
                             </div>
 
-                            <div class="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
-                              {#if t.assignee}
-                                <Avatar.Root class="size-6">
-                                  {#if t.assignee.avatarURL}
-                                    <Avatar.Image src={t.assignee.avatarURL} alt={t.assignee.name} />
-                                  {/if}
-                                  <Avatar.Fallback>{t.assignee.name.slice(0, 2).toUpperCase()}</Avatar.Fallback>
-                                </Avatar.Root>
-                                <span class="truncate">{t.assignee.name}</span>
-                              {:else}
-                                <span>Unassigned</span>
+                            <div class="mt-2 flex items-center justify-between gap-2 text-xs text-muted-foreground">
+                              <div class="flex items-center gap-2">
+                                {#if t.assignee}
+                                  <Avatar.Root class="size-6">
+                                    {#if t.assignee.avatarURL}
+                                      <Avatar.Image src={t.assignee.avatarURL} alt={t.assignee.name} />
+                                    {/if}
+                                    <Avatar.Fallback>{t.assignee.name.slice(0, 2).toUpperCase()}</Avatar.Fallback>
+                                  </Avatar.Root>
+                                  <span class="truncate">{t.assignee.name}</span>
+                                {:else}
+                                  <span>Unassigned</span>
+                                {/if}
+                              </div>
+                              {#if t.completeBy}
+                                <span class="whitespace-nowrap"
+                                  >{formatDistanceToNow(t.completeBy, { addSuffix: true })}</span
+                                >
                               {/if}
                             </div>
                           </div>
                         </HoverCard.Trigger>
 
-                        <HoverCard.Content class="w-80">
-                          <div class="space-y-2">
+                        <HoverCard.Content class="w-96">
+                          <div class="space-y-3">
                             <div class="font-semibold">{t.title}</div>
-                            <div class="text-sm wrap-break-word whitespace-pre-wrap text-muted-foreground">
-                              {t.description || 'No description.'}
+                            <div
+                              class="prose prose-sm max-h-[300px] overflow-y-auto rounded-md bg-muted/50 p-3 text-sm text-foreground prose-invert dark:prose-invert prose-headings:mt-2 prose-headings:text-base prose-headings:font-semibold prose-p:my-1 prose-ul:my-1 prose-li:my-0"
+                            >
+                              {#if t.description}
+                                {@html renderDescription(t.description)}
+                              {:else}
+                                <span class="text-muted-foreground">No description.</span>
+                              {/if}
                             </div>
 
                             <div class="flex gap-2">
