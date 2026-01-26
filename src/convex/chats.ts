@@ -113,6 +113,7 @@ export const inbox = query({
       type: 'dm' | 'ai' | 'group';
       displayName: string;
       otherUserID: Id<'users'> | null;
+      avatarURL: string | null;
     }> = [];
 
     for (const p of parts) {
@@ -122,6 +123,7 @@ export const inbox = query({
 
       let displayName = chat.name;
       let otherUserID: Id<'users'> | null = null;
+      let avatarURL: string | null = null;
 
       if (chat.type === 'dm') {
         // name is stored like: dm:<idA>:<idB>
@@ -133,12 +135,13 @@ export const inbox = query({
 
           const other = await ctx.db.get(otherUserID);
           displayName = other?.name ?? 'Direct message';
+          avatarURL = other?.avatarURL ?? null;
         } else {
           displayName = 'Direct message';
         }
       }
 
-      rows.push({ chatID: chat._id, type: chat.type, displayName, otherUserID });
+      rows.push({ chatID: chat._id, type: chat.type, displayName, otherUserID, avatarURL });
     }
 
     // alphabetical order in sidebar (your requirement)

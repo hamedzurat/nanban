@@ -1,14 +1,30 @@
 import { v } from 'convex/values';
 
+import type { Doc } from './_generated/dataModel';
 import { mutation, query } from './_generated/server';
 
 export const listByChat = query({
   args: { chatID: v.id('chats') },
   handler: async (ctx, { chatID }) => {
-    return await ctx.db
+    const messages = await ctx.db
       .query('messages')
       .withIndex('by_chat_time', (q) => q.eq('chatID', chatID))
       .collect();
+
+    return await Promise.all(
+      messages.map(async (m) => {
+        const sender = (await ctx.db.get(m.senderID)) as Doc<'users'> | null;
+        return {
+          ...m,
+          sender: sender
+            ? {
+                name: sender.name,
+                avatarURL: sender.avatarURL,
+              }
+            : null,
+        };
+      }),
+    );
   },
 });
 

@@ -1,14 +1,18 @@
 <script lang="ts">
   import { useConvexClient, useQuery } from 'convex-svelte';
+  import { formatDistanceToNow } from 'date-fns';
+  import Fuse from 'fuse.js';
 
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
 
+  import * as Avatar from '$lib/components/ui/avatar/index.js';
   import { Badge } from '$lib/components/ui/badge/index.js';
   import { Button } from '$lib/components/ui/button/index.js';
   import { Input } from '$lib/components/ui/input/index.js';
   import { ScrollArea } from '$lib/components/ui/scroll-area/index.js';
   import { Separator } from '$lib/components/ui/separator/index.js';
+  import { Skeleton } from '$lib/components/ui/skeleton/index.js';
   import { Textarea } from '$lib/components/ui/textarea/index.js';
   import { api, type Id } from '$lib/convex/api';
   import { session } from '$lib/session';
@@ -27,9 +31,10 @@
 
   function filteredChats() {
     const list = inbox.data ?? [];
-    const q = chatSearch.trim().toLowerCase();
+    const q = chatSearch.trim();
     if (!q) return list;
-    return list.filter((c) => c.displayName.toLowerCase().includes(q));
+    const fuse = new Fuse(list, { keys: ['displayName'], threshold: 0.4 });
+    return fuse.search(q).map((r) => r.item);
   }
 
   // auto-select first chat if none chosen
@@ -80,7 +85,7 @@
   }
 
   function onKeyDown(e: KeyboardEvent) {
-    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+    if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       send();
     }
@@ -96,9 +101,6 @@
           {@const a = activeChat()}
           <div class="flex items-center justify-between">
             <div class="font-semibold">Chats</div>
-            {#if a}
-              <Badge variant="secondary">{a.type}</Badge>
-            {/if}
           </div>
         {/if}
         <Input placeholder="Search chats..." bind:value={chatSearch} />
@@ -109,7 +111,29 @@
       <ScrollArea class="min-h-0 flex-1">
         <div class="p-2">
           {#if inbox.isLoading}
-            <div class="p-3 text-sm text-muted-foreground">Loading…</div>
+            <div class="space-y-2 p-3">
+              <div class="flex items-center gap-3">
+                <Skeleton class="h-10 w-10 rounded-full" />
+                <div class="space-y-2">
+                  <Skeleton class="h-4 w-[150px]" />
+                  <Skeleton class="h-3 w-[100px]" />
+                </div>
+              </div>
+              <div class="flex items-center gap-3">
+                <Skeleton class="h-10 w-10 rounded-full" />
+                <div class="space-y-2">
+                  <Skeleton class="h-4 w-[150px]" />
+                  <Skeleton class="h-3 w-[100px]" />
+                </div>
+              </div>
+              <div class="flex items-center gap-3">
+                <Skeleton class="h-10 w-10 rounded-full" />
+                <div class="space-y-2">
+                  <Skeleton class="h-4 w-[150px]" />
+                  <Skeleton class="h-3 w-[100px]" />
+                </div>
+              </div>
+            </div>
           {:else if inbox.error}
             <div class="p-3 text-sm text-destructive">{inbox.error.toString()}</div>
           {:else if filteredChats().length === 0}
@@ -123,9 +147,20 @@
                     {`${c.chatID}` === `${activeChatId()}` ? 'bg-accent text-accent-foreground' : ''}"
                   onclick={() => selectChat(c.chatID)}
                 >
-                  <div class="flex items-center justify-between gap-2">
-                    <div class="truncate font-medium">{c.displayName}</div>
-                    <div class="text-xs text-muted-foreground">{c.type}</div>
+                  <div class="flex items-center gap-3">
+                    <Avatar.Root>
+                      <Avatar.Image
+                        src={c.avatarURL ?? `https://api.dicebear.com/9.x/thumbs/svg?seed=${c.displayName}`}
+                        alt={c.displayName}
+                      />
+                      <Avatar.Fallback>{c.displayName.slice(0, 2).toUpperCase()}</Avatar.Fallback>
+                    </Avatar.Root>
+                    <div class="min-w-0 flex-1">
+                      <div class="flex items-center justify-between gap-2">
+                        <div class="truncate font-medium">{c.displayName}</div>
+                        <Badge variant="secondary" class="h-5 px-1 py-0 text-[10px]">{c.type}</Badge>
+                      </div>
+                    </div>
                   </div>
                 </button>
               {/each}
@@ -139,19 +174,26 @@
     <div class="flex h-full flex-col overflow-hidden rounded-lg border bg-card">
       {#if true}
         {@const a = activeChat()}
-        <div class="p-3">
-          <div class="font-semibold">
-            {#if a}{a.displayName}{:else}Select a chat{/if}
-          </div>
-          <div class="text-sm text-muted-foreground">
+        <div class="flex items-center justify-between p-3">
+          <div class="flex items-center gap-3">
             {#if a}
-              {a.type === 'ai'
-                ? 'Dummy AI chat (no external AI wired)'
-                : a.type === 'group'
-                  ? 'Everyone group chat'
-                  : 'Direct message'}
+              <Avatar.Root>
+                <Avatar.Image
+                  src={a.avatarURL ?? `https://api.dicebear.com/9.x/thumbs/svg?seed=${a.displayName}`}
+                  alt={a.displayName}
+                />
+                <Avatar.Fallback>{a.displayName.slice(0, 2).toUpperCase()}</Avatar.Fallback>
+              </Avatar.Root>
             {/if}
+            <div>
+              <div class="font-semibold">
+                {#if a}{a.displayName}{:else}Select a chat{/if}
+              </div>
+            </div>
           </div>
+          {#if a}
+            <Badge variant="secondary">{a.type}</Badge>
+          {/if}
         </div>
       {/if}
 
@@ -162,16 +204,57 @@
           {#if !activeChatId()}
             <div class="text-sm text-muted-foreground">Pick a conversation on the left.</div>
           {:else if messages.isLoading}
-            <div class="text-sm text-muted-foreground">Loading messages…</div>
+            <div class="space-y-4">
+              <div class="flex items-start gap-3">
+                <Skeleton class="h-8 w-8 rounded-full" />
+                <div class="space-y-2">
+                  <Skeleton class="h-4 w-[200px]" />
+                  <Skeleton class="h-4 w-[150px]" />
+                </div>
+              </div>
+              <div class="flex items-start gap-3">
+                <Skeleton class="h-8 w-8 rounded-full" />
+                <div class="space-y-2">
+                  <Skeleton class="h-4 w-[180px]" />
+                  <Skeleton class="h-4 w-[220px]" />
+                </div>
+              </div>
+              <div class="flex items-start gap-3">
+                <Skeleton class="h-8 w-8 rounded-full" />
+                <div class="space-y-2">
+                  <Skeleton class="h-4 w-[240px]" />
+                  <Skeleton class="h-4 w-[100px]" />
+                </div>
+              </div>
+            </div>
           {:else if messages.error}
             <div class="text-sm text-destructive">{messages.error.toString()}</div>
           {:else if (messages.data?.length ?? 0) === 0}
             <div class="text-sm text-muted-foreground">No messages yet.</div>
           {:else}
             {#each messages.data as m (m._id)}
-              <div class="space-y-1">
-                <div class="text-sm wrap-break-word whitespace-pre-wrap">{m.body}</div>
-                <div class="text-xs text-muted-foreground">{new Date(m.time).toLocaleString()}</div>
+              <div class="flex items-start gap-3">
+                <Avatar.Root class="mt-1 h-8 w-8">
+                  <Avatar.Image
+                    src={m.sender?.avatarURL ??
+                      `https://api.dicebear.com/9.x/thumbs/svg?seed=${m.sender?.name ?? 'Anonymous'}`}
+                    alt={m.sender?.name}
+                  />
+                  <Avatar.Fallback>{m.sender?.name?.slice(0, 2).toUpperCase() ?? '??'}</Avatar.Fallback>
+                </Avatar.Root>
+                <div class="w-full space-y-1">
+                  <div class="flex items-center justify-between gap-2">
+                    {#if m.sender}
+                      <div class="text-xs font-semibold text-muted-foreground">{m.sender.name}</div>
+                    {:else}
+                      <div class="text-xs font-semibold text-muted-foreground">Unknown</div>
+                    {/if}
+                    <div class="text-xs text-muted-foreground" title={new Date(m.time).toLocaleString()}>
+                      {formatDistanceToNow(m.time, { addSuffix: true })}
+                    </div>
+                  </div>
+                  <div class="text-sm wrap-break-word whitespace-pre-wrap">{m.body}</div>
+                </div>
               </div>
             {/each}
           {/if}
@@ -182,7 +265,7 @@
 
       <div class="space-y-2 p-3">
         <Textarea
-          placeholder="Write a message… (Ctrl/⌘ + Enter to send)"
+          placeholder="Write a message… (Enter to send, Shift+Enter for new line)"
           bind:value={body}
           onkeydown={onKeyDown}
           disabled={!activeChatId() || sending}
