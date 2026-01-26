@@ -90,7 +90,7 @@
 <div class="p-6">
   <div class="grid h-[calc(100dvh-6rem)] grid-cols-1 gap-4 lg:grid-cols-[320px_1fr]">
     <!-- Inbox list -->
-    <div class="rounded-lg border bg-card">
+    <div class="flex h-full flex-col overflow-hidden rounded-lg border bg-card">
       <div class="space-y-3 p-3">
         {#if true}
           {@const a = activeChat()}
@@ -106,7 +106,7 @@
 
       <Separator />
 
-      <ScrollArea class="h-[calc(100%-84px)]">
+      <ScrollArea class="min-h-0 flex-1">
         <div class="p-2">
           {#if inbox.isLoading}
             <div class="p-3 text-sm text-muted-foreground">Loading…</div>
@@ -136,7 +136,7 @@
     </div>
 
     <!-- Messages pane -->
-    <div class="flex flex-col rounded-lg border bg-card">
+    <div class="flex h-full flex-col overflow-hidden rounded-lg border bg-card">
       {#if true}
         {@const a = activeChat()}
         <div class="p-3">
@@ -157,7 +157,7 @@
 
       <Separator />
 
-      <ScrollArea class="flex-1">
+      <ScrollArea class="min-h-0 flex-1">
         <div class="space-y-3 p-4">
           {#if !activeChatId()}
             <div class="text-sm text-muted-foreground">Pick a conversation on the left.</div>
@@ -170,7 +170,7 @@
           {:else}
             {#each messages.data as m (m._id)}
               <div class="space-y-1">
-                <div class="text-sm break-words whitespace-pre-wrap">{m.body}</div>
+                <div class="text-sm wrap-break-word whitespace-pre-wrap">{m.body}</div>
                 <div class="text-xs text-muted-foreground">{new Date(m.time).toLocaleString()}</div>
               </div>
             {/each}
