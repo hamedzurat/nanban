@@ -2,13 +2,11 @@
   import { setupConvex } from 'convex-svelte';
   import { ModeWatcher } from 'mode-watcher';
 
-  import { PUBLIC_CONVEX_URL } from '$env/static/public';
-
   import './layout.css';
 
   const { children } = $props();
 
-  setupConvex(PUBLIC_CONVEX_URL);
+  setupConvex('https://capable-pelican-238.convex.cloud');
 </script>
 
 <ModeWatcher />
