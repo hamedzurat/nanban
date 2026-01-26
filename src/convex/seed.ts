@@ -1285,6 +1285,7 @@ interface WikiDef {
   title: string;
   content: string;
   daysAgo: number;
+  thumbnail?: string;
 }
 
 // Expanded WIKI per project (3-5 pages each)
@@ -1294,16 +1295,19 @@ const WIKI: Record<string, WikiDef[]> = {
       title: 'Combat Overview',
       daysAgo: 6,
       content: `# Combat Overview\n\n## Pillars\n- **Responsive stamina** (tactical pacing)\n- **Readable hits** (clear telegraphs)\n- **Build expression** (weapons + spells)\n\n## Core Actions\n- Light / Heavy combos\n- Dodge roll (i-frames)\n- Block + guard meter\n\n## Notes\nCombat should feel tough but fair, with strong audio-visual feedback.`,
+      thumbnail: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=800&q=80',
     },
     {
       title: 'Art Direction Notes',
       daysAgo: 18,
       content: `# Art Direction Notes\n\n## Look\nStylized realism: painterly textures with grounded lighting.\n\n## Palette\n- Warm oranges for safe zones\n- Cold blues for ruins\n- Desaturated tones for corrupted areas\n\n## Environment\nUse layered silhouettes and fog for depth.`,
+      thumbnail: 'https://images.unsplash.com/photo-1547891654-e66ed7ebb968?auto=format&fit=crop&w=800&q=80',
     },
     {
       title: 'Boss Encounter Guidelines',
       daysAgo: 11,
       content: `# Boss Encounter Guidelines\n\n## Rules\n- Telegraph big attacks clearly\n- Provide windows for stamina recovery\n- Add 2-3 learnable patterns\n\n## Arena\n- Avoid tight corners\n- Include landmarks for orientation\n- Space for dodge + camera movement`,
+      thumbnail: 'https://images.unsplash.com/photo-1519074069444-1ba4fff66d16?auto=format&fit=crop&w=800&q=80',
     },
     {
       title: 'QA Smoke Checklist',
@@ -1317,6 +1321,7 @@ const WIKI: Record<string, WikiDef[]> = {
       title: 'Track Design Guidelines',
       daysAgo: 7,
       content: `# Track Design Guidelines\n\n## Layout\n- 3 laps, 60-90 seconds per lap\n- At least 2 shortcut routes\n- Avoid long straights (>5 seconds)\n\n## Clarity\n- Racing line is obvious\n- Hazards telegraphed\n- Boost pads glow pre-activation`,
+      thumbnail: 'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=800&q=80',
     },
     {
       title: 'Mobile Performance Targets',
@@ -1340,6 +1345,7 @@ const WIKI: Record<string, WikiDef[]> = {
       title: 'Combat Readability Goals',
       daysAgo: 5,
       content: `# Combat Readability Goals\n\n## Must Be Obvious\n- Move range\n- Attack tiles\n- Damage preview\n- Status effects\n\n## UI Notes\nPrioritize clarity over style. Keep tooltips short.`,
+      thumbnail: 'https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?auto=format&fit=crop&w=800&q=80',
     },
     {
       title: 'Perk Design Rules',
@@ -1373,6 +1379,7 @@ const WIKI: Record<string, WikiDef[]> = {
       title: 'Art Notes: Neon Alley District',
       daysAgo: 21,
       content: `# Art Notes: Neon Alley District\n\n## Style\nWet asphalt, strong reflections, bold signage.\n\n## Lighting\n- Strong rim lights\n- Controlled bloom\n- Fog for depth\n\n## Notes\nKeep signage readable, not noisy.`,
+      thumbnail: 'https://images.unsplash.com/photo-1555680202-c86f0e12f086?auto=format&fit=crop&w=800&q=80',
     },
     {
       title: 'QA Checklist (Matchmaking)',
@@ -1386,6 +1393,7 @@ const WIKI: Record<string, WikiDef[]> = {
       title: 'Build Pipeline Overview',
       daysAgo: 5,
       content: `# Build Pipeline Overview\n\n## Stages\n1. Checkout\n2. Restore cache\n3. Build\n4. Run tests\n5. Package artifacts\n6. Upload + notify\n\n## Notes\nNightly builds should be reliable and predictable.`,
+      thumbnail: 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?auto=format&fit=crop&w=800&q=80',
     },
     {
       title: 'Release Candidate Checklist',
@@ -1404,6 +1412,7 @@ const WIKI: Record<string, WikiDef[]> = {
       title: 'Permissions Model',
       daysAgo: 6,
       content: `# Permissions Model\n\n## Roles\n- Admin\n- Editor\n- Viewer\n\n## Rules\n- Roles are project-scoped\n- Viewers can read but not write\n- Admins can manage members\n\n## Notes\nKeep it simple and auditable.`,
+      thumbnail: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=800&q=80',
     },
     {
       title: 'Task Markdown Conventions',
@@ -1912,6 +1921,7 @@ export const run = mutation({
             title: w.title,
             content: w.content,
             lastEdited: daysAgo(w.daysAgo),
+            thumbnail: w.thumbnail,
           });
         }
       }
