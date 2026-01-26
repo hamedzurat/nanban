@@ -25,7 +25,9 @@
             variant="outline"
             size="icon"
             onclick={() => setMode('light')}
-            class={userPrefersMode.current === 'light' ? 'border-primary bg-accent text-accent-foreground' : ''}
+            class={userPrefersMode.current === 'light'
+              ? 'bg-primary text-primary-foreground dark:bg-primary dark:text-primary-foreground'
+              : ''}
             aria-label="Light"
           >
             <SunIcon class="h-[1.2rem] w-[1.2rem]" />
@@ -34,7 +36,9 @@
             variant="outline"
             size="icon"
             onclick={() => setMode('dark')}
-            class={userPrefersMode.current === 'dark' ? 'border-primary bg-accent text-accent-foreground' : ''}
+            class={userPrefersMode.current === 'dark'
+              ? 'bg-primary text-primary-foreground dark:bg-primary dark:text-primary-foreground'
+              : ''}
             aria-label="Dark"
           >
             <MoonIcon class="h-[1.2rem] w-[1.2rem]" />
@@ -43,7 +47,9 @@
             variant="outline"
             size="icon"
             onclick={() => resetMode()}
-            class={userPrefersMode.current === 'system' ? 'border-primary bg-accent text-accent-foreground' : ''}
+            class={userPrefersMode.current === 'system'
+              ? 'bg-primary text-primary-foreground dark:bg-primary dark:text-primary-foreground'
+              : ''}
             title="System"
             aria-label="System"
           >

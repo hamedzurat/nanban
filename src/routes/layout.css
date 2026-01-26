@@ -67,7 +67,7 @@
   --popover-foreground: oklch(0.98 0.01 60);
 
   --primary: oklch(0.676 0.165 57.3); /* Brand Orange stays vibrant */
-  --primary-foreground: oklch(1 0 0);
+  --primary-foreground: oklch(0 0 0);
 
   --secondary: oklch(0.24 0.02 57.3); /* Dark orange-grey */
   --secondary-foreground: oklch(0.98 0.01 60);
