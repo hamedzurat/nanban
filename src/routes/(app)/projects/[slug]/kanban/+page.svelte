@@ -1,14 +1,16 @@
 <script lang="ts">
   import { useConvexClient, useQuery } from 'convex-svelte';
+  import { formatDistanceToNow } from 'date-fns';
 
   import { page } from '$app/state';
 
+  import TaskHoverCard from '$lib/components/TaskHoverCard.svelte';
   import * as Avatar from '$lib/components/ui/avatar/index.js';
   import { Badge } from '$lib/components/ui/badge/index.js';
   import * as Card from '$lib/components/ui/card/index.js';
   import * as ContextMenu from '$lib/components/ui/context-menu/index.js';
-  import * as HoverCard from '$lib/components/ui/hover-card/index.js';
   import { ScrollArea } from '$lib/components/ui/scroll-area/index.js';
+  import { Skeleton } from '$lib/components/ui/skeleton/index.js';
   import { api, type Id } from '$lib/convex/api';
 
   const client = useConvexClient();
@@ -16,7 +18,7 @@
   const projectSlug = () => page.params.slug as string;
 
   const kanban = useQuery(api.tasks.listForKanban, () => ({
-    orgSlug: 'zurat',
+    orgSlug: 'nanban',
     projectSlug: projectSlug(),
   }));
 
@@ -36,7 +38,7 @@
   }
 
   function priorityLabel(t: { isImportant: boolean; isUrgent: boolean }) {
-    if (t.isImportant && t.isUrgent) return 'Important + Urgent';
+    if (t.isImportant && t.isUrgent) return 'Important & Urgent';
     if (t.isImportant) return 'Important';
     if (t.isUrgent) return 'Urgent';
     return 'Normal';
@@ -68,7 +70,25 @@
   </div>
 
   {#if kanban.isLoading}
-    <div class="text-sm text-muted-foreground">Loading…</div>
+    <div class="grid gap-4 lg:grid-cols-5">
+      {#each columns as col}
+        <div class="flex h-[60dvh] flex-col rounded-lg border bg-card">
+          <div class="flex items-center justify-between p-3">
+            <Skeleton class="h-4 w-20" />
+            <Skeleton class="h-5 w-8 rounded-full" />
+          </div>
+          <div class="space-y-3 p-3 pt-0">
+            <Skeleton class="h-24 w-full" />
+            <Skeleton class="h-24 w-full" />
+            <Skeleton class="h-24 w-full" />
+            <Skeleton class="h-24 w-full" />
+            <Skeleton class="h-24 w-full" />
+            <Skeleton class="h-24 w-full" />
+            <Skeleton class="h-24 w-full" />
+          </div>
+        </div>
+      {/each}
+    </div>
   {:else if kanban.error}
     <div class="text-sm text-destructive">{kanban.error.toString()}</div>
   {:else if !kanban.data?.project}
@@ -76,7 +96,7 @@
       <Card.Header>
         <Card.Title>Project not found</Card.Title>
         <Card.Description>
-          No project for slug “{projectSlug()}” in org “zurat”.
+          No project for slug “{projectSlug()}” in org “nanban”.
         </Card.Description>
       </Card.Header>
     </Card.Root>
@@ -97,17 +117,23 @@
                 {#each tasksByStatus(col.key) as t (t._id)}
                   <ContextMenu.Root>
                     <ContextMenu.Trigger>
-                      <HoverCard.Root>
-                        <HoverCard.Trigger>
-                          <div
-                            class="cursor-default rounded-md border bg-background p-3 transition hover:bg-accent hover:text-accent-foreground"
-                          >
-                            <div class="flex items-start justify-between gap-2">
-                              <div class="line-clamp-2 leading-snug font-medium">{t.title}</div>
-                              <Badge variant="outline" class="shrink-0">{priorityLabel(t)}</Badge>
-                            </div>
+                      <TaskHoverCard
+                        title={t.title}
+                        description={t.description}
+                        status={t.status}
+                        isImportant={t.isImportant}
+                        isUrgent={t.isUrgent}
+                      >
+                        <div
+                          class="cursor-default rounded-md border bg-background p-3 transition hover:bg-accent hover:text-accent-foreground"
+                        >
+                          <div class="flex items-start justify-between gap-2">
+                            <div class="line-clamp-2 leading-snug font-medium">{t.title}</div>
+                            <Badge variant="outline" class="shrink-0">{priorityLabel(t)}</Badge>
+                          </div>
 
-                            <div class="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+                          <div class="mt-2 flex items-center justify-between gap-2 text-xs text-muted-foreground">
+                            <div class="flex items-center gap-2">
                               {#if t.assignee}
                                 <Avatar.Root class="size-6">
                                   {#if t.assignee.avatarURL}
@@ -120,24 +146,14 @@
                                 <span>Unassigned</span>
                               {/if}
                             </div>
+                            {#if t.completeBy}
+                              <span class="whitespace-nowrap"
+                                >{formatDistanceToNow(t.completeBy, { addSuffix: true })}</span
+                              >
+                            {/if}
                           </div>
-                        </HoverCard.Trigger>
-
-                        <HoverCard.Content class="w-80">
-                          <div class="space-y-2">
-                            <div class="font-semibold">{t.title}</div>
-                            <div class="text-sm wrap-break-word whitespace-pre-wrap text-muted-foreground">
-                              {t.description || 'No description.'}
-                            </div>
-
-                            <div class="flex gap-2">
-                              {#if t.isImportant}<Badge>Important</Badge>{/if}
-                              {#if t.isUrgent}<Badge variant="destructive">Urgent</Badge>{/if}
-                              <Badge variant="secondary">{t.status}</Badge>
-                            </div>
-                          </div>
-                        </HoverCard.Content>
-                      </HoverCard.Root>
+                        </div>
+                      </TaskHoverCard>
                     </ContextMenu.Trigger>
 
                     <ContextMenu.Content>

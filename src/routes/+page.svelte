@@ -9,18 +9,14 @@
   type DemoUser = { name: string; email: string };
 
   const users: DemoUser[] = [
-    { name: 'Aisha Rahman', email: 'aisha@zurat.dev' },
-    { name: 'Aminul Islam', email: 'aminul@zurat.dev' },
-    { name: 'Arif Hasan', email: 'arif@zurat.dev' },
-    { name: 'Farhana Akter', email: 'farhana@zurat.dev' },
-    { name: 'Hasib Chowdhury', email: 'hasib@zurat.dev' },
-    { name: 'Ishrat Jahan', email: 'ishrat@zurat.dev' },
-    { name: 'Jubayer Hossain', email: 'jubayer@zurat.dev' },
-    { name: 'Mahmud Hasan', email: 'mahmud@zurat.dev' },
-    { name: 'Nusrat Karim', email: 'nusrat@zurat.dev' },
-    { name: 'Rafi Ahmed', email: 'rafi@zurat.dev' },
-    { name: 'Sadia Sultana', email: 'sadia@zurat.dev' },
-    { name: 'Tanvir Rahman', email: 'tanvir@zurat.dev' },
+    { name: 'Nabila Rahman', email: 'nabila@zurat.dev' },
+    { name: 'Tahmid Hasan', email: 'tahmid@zurat.dev' },
+    { name: 'Farhan Ahmed', email: 'farhan@zurat.dev' },
+    { name: 'Mehnaz Islam', email: 'mehnaz@zurat.dev' },
+    { name: 'Rafiq Uddin', email: 'rafiq@zurat.dev' },
+    { name: 'Sadia Chowdhury', email: 'sadia@zurat.dev' },
+    { name: 'Arif Mahmud', email: 'arif@zurat.dev' },
+    { name: 'Nusrat Jahan', email: 'nusrat@zurat.dev' },
   ];
 
   const pw = 'password123';

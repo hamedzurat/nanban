@@ -1,12 +1,15 @@
 <script lang="ts">
   import { useConvexClient, useQuery } from 'convex-svelte';
+  import Fuse from 'fuse.js';
 
   import { goto } from '$app/navigation';
 
   import * as Avatar from '$lib/components/ui/avatar/index.js';
+  import { Badge } from '$lib/components/ui/badge/index.js';
   import { Button } from '$lib/components/ui/button/index.js';
   import * as Card from '$lib/components/ui/card/index.js';
   import { Input } from '$lib/components/ui/input/index.js';
+  import { Skeleton } from '$lib/components/ui/skeleton/index.js';
   import { api, type Id } from '$lib/convex/api';
   import { session } from '$lib/session';
 
@@ -25,23 +28,31 @@
   let q = $state('');
   let busyId = $state<string | null>(null);
 
-  function filtered(): Person[] {
+  const availablePeople = $derived.by(() => {
     const data = (people.data ?? []) as Person[];
     const me = $session?.userId;
-    const needle = q.trim().toLowerCase();
+    return me ? data.filter((u) => u._id !== me) : data;
+  });
 
-    const rows = me ? data.filter((u) => u._id !== me) : data;
-    if (!needle) return rows;
+  const fuse = $derived(
+    new Fuse(availablePeople, {
+      keys: ['name', 'email'],
+      threshold: 0.4,
+    }),
+  );
 
-    return rows.filter((u) => (u.name + ' ' + u.email).toLowerCase().includes(needle));
-  }
+  const filtered = $derived.by(() => {
+    const needle = q.trim();
+    if (!needle) return availablePeople;
+    return fuse.search(needle).map((r) => r.item);
+  });
 
   async function startChat(userId: Id<'users'>) {
     if (!$session) return;
     busyId = `${userId}`;
     try {
       const res = await client.mutation(api.chats.getOrCreateDm, {
-        orgSlug: 'zurat',
+        orgSlug: 'nanban',
         userA: $session.userId,
         userB: userId,
       });
@@ -64,22 +75,44 @@
 
   <Card.Root>
     <Card.Header>
-      <Card.Title>Directory</Card.Title>
-      <Card.Description>
-        {#if people.isLoading}Loading…{:else}{filtered().length} people{/if}
-      </Card.Description>
+      <div class="flex items-center justify-between">
+        <Card.Title>Directory</Card.Title>
+        <div class="text-sm text-muted-foreground">
+          {#if people.isLoading}
+            <div class="flex items-center gap-2">
+              <Skeleton class="h-4 w-4 rounded-full" />
+              <Skeleton class="h-4 w-24" />
+            </div>
+          {:else}
+            <Badge variant="secondary">{filtered.length} peoples</Badge>
+          {/if}
+        </div>
+      </div>
     </Card.Header>
 
     <Card.Content class="p-0">
       {#if people.isLoading}
-        <div class="p-6 text-sm text-muted-foreground">Loading…</div>
+        <div class="divide-y">
+          {#each Array(16) as _}
+            <div class="flex items-center justify-between gap-4 p-4">
+              <div class="flex min-w-0 items-center gap-3">
+                <Skeleton class="size-9 rounded-full" />
+                <div class="space-y-2">
+                  <Skeleton class="h-4 w-[150px]" />
+                  <Skeleton class="h-3 w-[100px]" />
+                </div>
+              </div>
+              <Skeleton class="h-9 w-[70px]" />
+            </div>
+          {/each}
+        </div>
       {:else if people.error}
         <div class="p-6 text-sm text-destructive">Failed: {people.error.toString()}</div>
-      {:else if filtered().length === 0}
+      {:else if filtered.length === 0}
         <div class="p-6 text-sm text-muted-foreground">No users found.</div>
       {:else}
         <div class="divide-y">
-          {#each filtered() as u (u._id)}
+          {#each filtered as u (u._id)}
             <div class="flex items-center justify-between gap-4 p-4">
               <div class="flex min-w-0 items-center gap-3">
                 <Avatar.Root class="size-9">
@@ -95,7 +128,7 @@
                 </div>
               </div>
 
-              <Button variant="outline" disabled={!$session || busyId === `${u._id}`} onclick={() => startChat(u._id)}>
+              <Button disabled={!$session || busyId === `${u._id}`} onclick={() => startChat(u._id)}>
                 {#if busyId === `${u._id}`}Opening…{:else}Chat{/if}
               </Button>
             </div>

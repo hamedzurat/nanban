@@ -60,7 +60,12 @@ export const listByProject = query({
 
     return {
       project: { _id: project._id, name: project.name, slug: project.slug },
-      pages: pages.map((w) => ({ _id: w._id, title: w.title, lastEdited: w.lastEdited })),
+      pages: pages.map((w) => ({
+        _id: w._id,
+        title: w.title,
+        lastEdited: w.lastEdited,
+        thumbnail: w.thumbnail,
+      })),
     };
   },
 });
@@ -76,6 +81,7 @@ export const get = query({
       content: w.content,
       lastEdited: w.lastEdited,
       projectID: w.projectID,
+      thumbnail: w.thumbnail,
     };
   },
 });
@@ -86,8 +92,9 @@ export const create = mutation({
     projectSlug: v.string(),
     title: v.string(),
     content: v.optional(v.string()),
+    thumbnail: v.optional(v.string()),
   },
-  handler: async (ctx, { orgSlug, projectSlug, title, content }) => {
+  handler: async (ctx, { orgSlug, projectSlug, title, content, thumbnail }) => {
     const org = await ctx.db
       .query('orgs')
       .withIndex('by_slug', (q) => q.eq('slug', orgSlug))
@@ -116,17 +123,28 @@ export const create = mutation({
       title: cleanTitle,
       content: content ?? '',
       lastEdited: now,
+      thumbnail,
     });
 
     return { id };
   },
 });
 
-export const updateContent = mutation({
-  args: { id: v.id('wiki'), content: v.string() },
-  handler: async (ctx, { id, content }) => {
+export const update = mutation({
+  args: {
+    id: v.id('wiki'),
+    title: v.optional(v.string()),
+    content: v.optional(v.string()),
+    thumbnail: v.optional(v.string()),
+  },
+  handler: async (ctx, { id, title, content, thumbnail }) => {
     const now = Date.now();
-    await ctx.db.patch(id, { content, lastEdited: now });
+    const updates: any = { lastEdited: now };
+    if (title !== undefined) updates.title = title.trim();
+    if (content !== undefined) updates.content = content;
+    if (thumbnail !== undefined) updates.thumbnail = thumbnail.trim() || undefined;
+
+    await ctx.db.patch(id, updates);
   },
 });
 

@@ -3,6 +3,7 @@
     BookOpen,
     Building2,
     ChevronDown,
+    ChevronUp,
     FolderKanban,
     LayoutDashboard,
     LogOut,
@@ -18,34 +19,42 @@
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
 
+  import * as Avatar from '$lib/components/ui/avatar/index.js';
   import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
   import * as Sidebar from '$lib/components/ui/sidebar/index.js';
+  import { Skeleton } from '$lib/components/ui/skeleton/index.js';
   import { api } from '$lib/convex/api';
   import { clearSession, session } from '$lib/session';
 
-  const ORG_SLUG = 'zurat';
-
-  // routing helpers
+  const ORG_SLUG = 'nanban';
   const pathname = () => page.url.pathname;
   const isDashboard = () => pathname() === '/dashboard';
   const isProjectRoute = () => pathname().startsWith('/projects/');
   const projectSlug = () => page.params.slug as string | undefined;
-
-  // data
   const projects = useQuery(api.projects.listForSidebar, () => ({ orgSlug: ORG_SLUG }));
 
   function nav(href: string) {
     goto(href);
   }
+
   function active(href: string) {
     return pathname() === href;
   }
+
   function activePrefix(prefix: string) {
     return pathname().startsWith(prefix);
   }
 
   function projectHref(slug: string, sub: string) {
     return `/projects/${slug}/${sub}`;
+  }
+
+  function switchProject(newSlug: string) {
+    const currentSlug = projectSlug();
+    if (isProjectRoute() && currentSlug) {
+      return pathname().replace(`/projects/${currentSlug}`, `/projects/${newSlug}`);
+    }
+    return projectHref(newSlug, 'kanban');
   }
 
   async function logout() {
@@ -55,10 +64,9 @@
 </script>
 
 <Sidebar.Root>
-  <!-- HEADER: logo + project switcher dropdown -->
   <Sidebar.Header class="px-2 py-2">
     <DropdownMenu.Root>
-      <DropdownMenu.Trigger asChild>
+      <DropdownMenu.Trigger>
         <button
           type="button"
           class="flex w-full items-center justify-between rounded-md px-2 py-2 transition hover:bg-accent hover:text-accent-foreground"
@@ -88,14 +96,17 @@
         <DropdownMenu.Label>Switch project</DropdownMenu.Label>
 
         {#if projects.isLoading}
-          <div class="px-2 py-2 text-sm text-muted-foreground">Loading…</div>
+          <div class="flex flex-col gap-1 px-2 py-2">
+            <Skeleton class="h-8 w-full" />
+            <Skeleton class="h-8 w-full" />
+          </div>
         {:else if projects.error}
           <div class="px-2 py-2 text-sm text-destructive">Failed to load projects</div>
         {:else if (projects.data?.length ?? 0) === 0}
           <div class="px-2 py-2 text-sm text-muted-foreground">No projects</div>
         {:else}
           {#each projects.data as p (p._id)}
-            <DropdownMenu.Item onclick={() => nav(projectHref(p.slug, 'kanban'))}>
+            <DropdownMenu.Item onclick={() => nav(switchProject(p.slug))}>
               {p.name}
             </DropdownMenu.Item>
           {/each}
@@ -108,7 +119,6 @@
   </Sidebar.Header>
 
   <Sidebar.Content>
-    <!-- GLOBAL NAV -->
     <Sidebar.Group>
       <Sidebar.GroupLabel>Global</Sidebar.GroupLabel>
       <Sidebar.GroupContent>
@@ -137,7 +147,6 @@
       </Sidebar.GroupContent>
     </Sidebar.Group>
 
-    <!-- PROJECT NAV (only when inside a project) -->
     {#if !isDashboard() && isProjectRoute() && projectSlug()}
       <Sidebar.Group>
         <Sidebar.GroupLabel>Project</Sidebar.GroupLabel>
@@ -198,19 +207,26 @@
     {/if}
   </Sidebar.Content>
 
-  <!-- FOOTER: user preview + settings/logout dropdown -->
   <Sidebar.Footer class="px-2 py-2">
     <DropdownMenu.Root>
-      <DropdownMenu.Trigger asChild>
+      <DropdownMenu.Trigger>
         <button
           type="button"
           class="flex w-full items-center justify-between rounded-md px-2 py-2 transition hover:bg-accent hover:text-accent-foreground"
         >
-          <div class="min-w-0 text-left">
-            <div class="truncate text-sm font-medium">{$session?.name ?? 'Guest'}</div>
-            <div class="truncate text-xs text-muted-foreground">{$session?.email ?? ''}</div>
+          <div class="flex min-w-0 items-center gap-2">
+            <Avatar.Root class="size-8 rounded-lg">
+              <Avatar.Image src={$session?.avatarURL ?? ''} alt={$session?.name ?? 'User'} />
+              <Avatar.Fallback class="rounded-lg">
+                {$session?.name?.substring(0, 2)?.toUpperCase() ?? 'U'}
+              </Avatar.Fallback>
+            </Avatar.Root>
+            <div class="min-w-0 text-left">
+              <div class="truncate text-sm font-medium">{$session?.name ?? 'Guest'}</div>
+              <div class="truncate text-xs text-muted-foreground">{$session?.email ?? ''}</div>
+            </div>
           </div>
-          <ChevronDown class="size-4 shrink-0 text-muted-foreground" />
+          <ChevronUp class="size-4 shrink-0 text-muted-foreground" />
         </button>
       </DropdownMenu.Trigger>
 

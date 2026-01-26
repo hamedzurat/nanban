@@ -49,6 +49,7 @@ export default defineSchema({
     ),
     isImportant: v.boolean(),
     isUrgent: v.boolean(),
+    completeBy: v.number(), // Due date timestamp
   })
     .index('by_project', ['projectID'])
     .index('by_project_status', ['projectID', 'status'])
@@ -60,6 +61,7 @@ export default defineSchema({
     title: v.string(),
     content: v.string(),
     lastEdited: v.number(), // Date.now()
+    thumbnail: v.optional(v.string()),
   })
     .index('by_project', ['projectID'])
     .index('by_project_title', ['projectID', 'title'])
