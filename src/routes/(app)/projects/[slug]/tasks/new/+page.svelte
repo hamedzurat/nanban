@@ -66,10 +66,15 @@
       return;
     }
 
+    if (!completeByDate) {
+      error = 'Complete by date is required';
+      return;
+    }
+
     saving = true;
     try {
       // Convert CalendarDate to timestamp if present
-      const completeBy = completeByDate ? completeByDate.toDate(getLocalTimeZone()).getTime() : undefined;
+      const completeBy = completeByDate.toDate(getLocalTimeZone()).getTime();
 
       await client.mutation(api.tasks.createBySlug, {
         orgSlug: 'nanban',
