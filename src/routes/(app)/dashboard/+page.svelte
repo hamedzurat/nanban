@@ -7,6 +7,7 @@
   import { Badge } from '$lib/components/ui/badge/index.js';
   import * as Card from '$lib/components/ui/card/index.js';
   import { Progress } from '$lib/components/ui/progress/index.js';
+  import { Skeleton } from '$lib/components/ui/skeleton/index.js';
   import { api } from '$lib/convex/api';
 
   const dashboard = useQuery(api.dashboard.company, () => ({ orgSlug: 'nanban' }));
@@ -25,7 +26,40 @@
   </div>
 
   {#if dashboard.isLoading}
-    <div class="text-sm text-muted-foreground">Loading...</div>
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {#each Array(3) as _}
+        <Card.Root>
+          <Card.Header class="space-y-2">
+            <div class="flex items-start justify-between gap-2">
+              <div class="min-w-0 flex-1 space-y-1">
+                <Skeleton class="h-5 w-1/3" />
+                <Skeleton class="h-4 w-full" />
+              </div>
+              <Skeleton class="h-5 w-10 rounded-full" />
+            </div>
+
+            <Skeleton class="h-2 w-full" />
+          </Card.Header>
+
+          <Card.Content class="space-y-3">
+            <div class="grid grid-cols-2 gap-2 text-sm">
+              {#each Array(5) as _}
+                <div class="flex items-center justify-between">
+                  <Skeleton class="h-4 w-16" />
+                  <Skeleton class="h-4 w-4" />
+                </div>
+              {/each}
+            </div>
+
+            <div class="flex items-center gap-1">
+              {#each Array(4) as _}
+                <Skeleton class="size-7 rounded-full" />
+              {/each}
+            </div>
+          </Card.Content>
+        </Card.Root>
+      {/each}
+    </div>
   {:else if dashboard.error}
     <div class="text-sm text-destructive">
       Failed to load: {dashboard.error.toString()}

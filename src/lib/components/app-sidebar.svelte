@@ -22,6 +22,7 @@
   import * as Avatar from '$lib/components/ui/avatar/index.js';
   import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
   import * as Sidebar from '$lib/components/ui/sidebar/index.js';
+  import { Skeleton } from '$lib/components/ui/skeleton/index.js';
   import { api } from '$lib/convex/api';
   import { clearSession, session } from '$lib/session';
 
@@ -46,6 +47,14 @@
 
   function projectHref(slug: string, sub: string) {
     return `/projects/${slug}/${sub}`;
+  }
+
+  function switchProject(newSlug: string) {
+    const currentSlug = projectSlug();
+    if (isProjectRoute() && currentSlug) {
+      return pathname().replace(`/projects/${currentSlug}`, `/projects/${newSlug}`);
+    }
+    return projectHref(newSlug, 'kanban');
   }
 
   async function logout() {
@@ -87,14 +96,17 @@
         <DropdownMenu.Label>Switch project</DropdownMenu.Label>
 
         {#if projects.isLoading}
-          <div class="px-2 py-2 text-sm text-muted-foreground">Loading…</div>
+          <div class="flex flex-col gap-1 px-2 py-2">
+            <Skeleton class="h-8 w-full" />
+            <Skeleton class="h-8 w-full" />
+          </div>
         {:else if projects.error}
           <div class="px-2 py-2 text-sm text-destructive">Failed to load projects</div>
         {:else if (projects.data?.length ?? 0) === 0}
           <div class="px-2 py-2 text-sm text-muted-foreground">No projects</div>
         {:else}
           {#each projects.data as p (p._id)}
-            <DropdownMenu.Item onclick={() => nav(projectHref(p.slug, 'kanban'))}>
+            <DropdownMenu.Item onclick={() => nav(switchProject(p.slug))}>
               {p.name}
             </DropdownMenu.Item>
           {/each}
