@@ -17,7 +17,7 @@
   const client = useConvexClient();
   const projectSlug = () => page.params.slug as string;
 
-  const ORG = 'zurat';
+  const ORG = 'nanban';
   const PER_QUADRANT = 15;
 
   let q = $state('');
@@ -151,7 +151,7 @@
   <div class="grid gap-4 lg:grid-cols-2">
     {#each quads as quad (quad.key)}
       {@const rq = getQ(quad.key)}
-      <Card.Root class="min-h-[18rem]">
+      <Card.Root class="min-h-72">
         <Card.Header>
           <Card.Title class="flex items-center justify-between">
             <span>{quad.title}</span>
@@ -171,11 +171,11 @@
             <div class="space-y-2">
               {#each fuzzy(rq.data?.page ?? []) as t (t._id)}
                 <ContextMenu.Root>
-                  <ContextMenu.Trigger asChild>
+                  <ContextMenu.Trigger>
                     <div class="cursor-default rounded-md border p-3 transition hover:bg-accent/40">
                       <div class="flex items-start justify-between gap-2">
                         <HoverCard.Root>
-                          <HoverCard.Trigger asChild>
+                          <HoverCard.Trigger>
                             <div class="line-clamp-2 leading-snug font-medium">{t.title}</div>
                           </HoverCard.Trigger>
                           <HoverCard.Content class="w-96">

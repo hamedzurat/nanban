@@ -25,7 +25,7 @@
   import { api } from '$lib/convex/api';
   import { clearSession, session } from '$lib/session';
 
-  const ORG_SLUG = 'zurat';
+  const ORG_SLUG = 'nanban';
   const pathname = () => page.url.pathname;
   const isDashboard = () => pathname() === '/dashboard';
   const isProjectRoute = () => pathname().startsWith('/projects/');

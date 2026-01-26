@@ -27,7 +27,7 @@
     return page.url.searchParams.get('c');
   }
 
-  const inbox = useQuery(api.chats.inbox, () => ($session ? { orgSlug: 'zurat', userID: $session.userId } : 'skip')); // "skip" is supported
+  const inbox = useQuery(api.chats.inbox, () => ($session ? { orgSlug: 'nanban', userID: $session.userId } : 'skip')); // "skip" is supported
 
   function filteredChats() {
     const list = inbox.data ?? [];

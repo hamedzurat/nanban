@@ -52,7 +52,7 @@
     busyId = `${userId}`;
     try {
       const res = await client.mutation(api.chats.getOrCreateDm, {
-        orgSlug: 'zurat',
+        orgSlug: 'nanban',
         userA: $session.userId,
         userB: userId,
       });

@@ -70,7 +70,7 @@
   });
 
   const data = useQuery(api.tasks.listForTablePaginated, () => ({
-    orgSlug: 'zurat',
+    orgSlug: 'nanban',
     projectSlug: projectSlug(),
     status: status === 'all' ? undefined : (status as any),
     quadrant: quadrant === 'all' ? 'all' : (quadrant as any),
@@ -289,7 +289,7 @@
 
                 <Table.Cell class="font-medium">
                   <HoverCard.Root>
-                    <HoverCard.Trigger asChild>
+                    <HoverCard.Trigger>
                       <span class="cursor-default">{t.title}</span>
                     </HoverCard.Trigger>
                     <HoverCard.Content class="w-96">

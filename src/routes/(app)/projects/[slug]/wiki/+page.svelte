@@ -13,7 +13,7 @@
   const projectSlug = () => page.params.slug as string;
 
   const data = useQuery(api.wiki.listByProject, () => ({
-    orgSlug: 'zurat',
+    orgSlug: 'nanban',
     projectSlug: projectSlug(),
   }));
 
@@ -31,7 +31,7 @@
     creating = true;
     try {
       const res = await client.mutation(api.wiki.create, {
-        orgSlug: 'zurat',
+        orgSlug: 'nanban',
         projectSlug: projectSlug(),
         title,
         content: '',

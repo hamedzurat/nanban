@@ -23,7 +23,7 @@
   const projectSlug = () => page.params.slug as string;
 
   const membersQ = useQuery(api.projects.membersBySlug, () => ({
-    orgSlug: 'zurat',
+    orgSlug: 'nanban',
     projectSlug: projectSlug(),
   }));
 
@@ -71,7 +71,7 @@
       const completeBy = completeByDate ? completeByDate.toDate(getLocalTimeZone()).getTime() : undefined;
 
       await client.mutation(api.tasks.createBySlug, {
-        orgSlug: 'zurat',
+        orgSlug: 'nanban',
         projectSlug: projectSlug(),
         title: title.trim(),
         description: description.trim(),

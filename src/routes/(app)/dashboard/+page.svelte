@@ -9,7 +9,7 @@
   import { Progress } from '$lib/components/ui/progress/index.js';
   import { api } from '$lib/convex/api';
 
-  const dashboard = useQuery(api.dashboard.company, () => ({ orgSlug: 'zurat' }));
+  const dashboard = useQuery(api.dashboard.company, () => ({ orgSlug: 'nanban' }));
 
   function openProject(slug: string) {
     goto(`/projects/${slug}/kanban`);

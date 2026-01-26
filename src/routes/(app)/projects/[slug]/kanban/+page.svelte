@@ -16,7 +16,7 @@
   const projectSlug = () => page.params.slug as string;
 
   const kanban = useQuery(api.tasks.listForKanban, () => ({
-    orgSlug: 'zurat',
+    orgSlug: 'nanban',
     projectSlug: projectSlug(),
   }));
 
@@ -76,7 +76,7 @@
       <Card.Header>
         <Card.Title>Project not found</Card.Title>
         <Card.Description>
-          No project for slug “{projectSlug()}” in org “zurat”.
+          No project for slug “{projectSlug()}” in org “nanban”.
         </Card.Description>
       </Card.Header>
     </Card.Root>
