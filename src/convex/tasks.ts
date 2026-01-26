@@ -425,3 +425,58 @@ export const listMineByQuadrantPaginated = query({
     };
   },
 });
+
+export const listMineByQuadrant = query({
+  args: {
+    orgSlug: v.string(),
+    projectSlug: v.string(),
+    userID: v.id('users'),
+    quadrant: Quadrant,
+  },
+  handler: async (ctx, { orgSlug, projectSlug, userID, quadrant }) => {
+    const org = await ctx.db
+      .query('orgs')
+      .withIndex('by_slug', (q) => q.eq('slug', orgSlug))
+      .first();
+    if (!org) return { project: null, tasks: [] };
+
+    const project = await ctx.db
+      .query('projects')
+      .withIndex('by_org_slug', (q) => q.eq('orgID', org._id).eq('slug', projectSlug))
+      .first();
+    if (!project) return { project: null, tasks: [] };
+
+    let q = ctx.db
+      .query('tasks')
+      .withIndex('by_project_assignee', (qq) => qq.eq('projectID', project._id).eq('assigneeID', userID));
+
+    q = q.filter((qq) => {
+      const imp = qq.field('isImportant');
+      const urg = qq.field('isUrgent');
+      if (quadrant === 'do') return qq.and(qq.eq(imp, true), qq.eq(urg, true));
+      if (quadrant === 'decide') return qq.and(qq.eq(imp, true), qq.eq(urg, false));
+      if (quadrant === 'delegate') return qq.and(qq.eq(imp, false), qq.eq(urg, true));
+      return qq.and(qq.eq(imp, false), qq.eq(urg, false));
+    });
+
+    const tasks = await q.order('desc').collect();
+
+    const out = [];
+    for (const t of tasks) {
+      out.push({
+        _id: t._id,
+        title: t.title,
+        description: t.description ?? '',
+        status: t.status,
+        isImportant: t.isImportant,
+        isUrgent: t.isUrgent,
+        completeBy: t.completeBy,
+      });
+    }
+
+    return {
+      project: { _id: project._id, name: project.name, slug: project.slug },
+      tasks: out,
+    };
+  },
+});
