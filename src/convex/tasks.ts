@@ -115,6 +115,7 @@ export const update = mutation({
     status: v.optional(Status),
     isImportant: v.optional(v.boolean()),
     isUrgent: v.optional(v.boolean()),
+    assigneeID: v.optional(v.id('users')),
   },
   handler: async (ctx, { taskID, ...patch }) => {
     // remove undefined keys
@@ -123,6 +124,13 @@ export const update = mutation({
       if (v !== undefined) next[k] = v;
     }
     await ctx.db.patch(taskID, next);
+  },
+});
+
+export const remove = mutation({
+  args: { taskID: v.id('tasks') },
+  handler: async (ctx, { taskID }) => {
+    await ctx.db.delete(taskID);
   },
 });
 

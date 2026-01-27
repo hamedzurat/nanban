@@ -17,6 +17,7 @@
   import { Skeleton } from '$lib/components/ui/skeleton/index.js';
   import * as Table from '$lib/components/ui/table/index.js';
   import { api, type Id } from '$lib/convex/api';
+  import { session } from '$lib/session';
 
   const client = useConvexClient();
   const projectSlug = () => page.params.slug as string;
@@ -81,6 +82,13 @@
     orgSlug: 'nanban',
     projectSlug: projectSlug(),
   }));
+
+  // Check if user is a member of this project
+  function isMember() {
+    if (!$session) return false;
+    const members = membersQuery.data?.members ?? [];
+    return members.some((m) => m._id === $session.userId);
+  }
 
   // reset paging when filters change
   $effect(() => {
@@ -454,31 +462,43 @@
                 </Table.Cell>
 
                 <Table.Cell>
-                  <Select.Root type="single" value={t.status} onValueChange={(v) => v && setStatus(t._id, v as ColKey)}>
-                    <Select.Trigger class="h-7 w-28 text-xs">{t.status}</Select.Trigger>
-                    <Select.Content>
-                      {#each columns as s (s.key)}
-                        <Select.Item value={s.key} label={s.label}>{s.label}</Select.Item>
-                      {/each}
-                    </Select.Content>
-                  </Select.Root>
+                  {#if isMember()}
+                    <Select.Root
+                      type="single"
+                      value={t.status}
+                      onValueChange={(v) => v && setStatus(t._id, v as ColKey)}
+                    >
+                      <Select.Trigger class="h-7 w-28 text-xs">{t.status}</Select.Trigger>
+                      <Select.Content>
+                        {#each columns as s (s.key)}
+                          <Select.Item value={s.key} label={s.label}>{s.label}</Select.Item>
+                        {/each}
+                      </Select.Content>
+                    </Select.Root>
+                  {:else}
+                    <Badge variant="outline" class="text-xs">{t.status}</Badge>
+                  {/if}
                 </Table.Cell>
 
                 <Table.Cell>
                   <div class="flex items-center gap-1">
-                    <DropdownMenu.Root>
-                      <DropdownMenu.Trigger>
-                        <Badge variant="outline" class="text-xs">{eisenhowerLabel(t)} <ChevronDown /></Badge>
-                      </DropdownMenu.Trigger>
-                      <DropdownMenu.Content>
-                        <DropdownMenu.Item onclick={() => toggleImportant(t._id, t.isImportant)}>
-                          {t.isImportant ? 'Unmark important' : 'Mark important'}
-                        </DropdownMenu.Item>
-                        <DropdownMenu.Item onclick={() => toggleUrgent(t._id, t.isUrgent)}>
-                          {t.isUrgent ? 'Unmark urgent' : 'Mark urgent'}
-                        </DropdownMenu.Item>
-                      </DropdownMenu.Content>
-                    </DropdownMenu.Root>
+                    {#if isMember()}
+                      <DropdownMenu.Root>
+                        <DropdownMenu.Trigger>
+                          <Badge variant="outline" class="text-xs">{eisenhowerLabel(t)} <ChevronDown /></Badge>
+                        </DropdownMenu.Trigger>
+                        <DropdownMenu.Content>
+                          <DropdownMenu.Item onclick={() => toggleImportant(t._id, t.isImportant)}>
+                            {t.isImportant ? 'Unmark important' : 'Mark important'}
+                          </DropdownMenu.Item>
+                          <DropdownMenu.Item onclick={() => toggleUrgent(t._id, t.isUrgent)}>
+                            {t.isUrgent ? 'Unmark urgent' : 'Mark urgent'}
+                          </DropdownMenu.Item>
+                        </DropdownMenu.Content>
+                      </DropdownMenu.Root>
+                    {:else}
+                      <Badge variant="outline" class="text-xs">{eisenhowerLabel(t)}</Badge>
+                    {/if}
                   </div>
                 </Table.Cell>
 
