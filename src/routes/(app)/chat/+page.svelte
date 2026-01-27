@@ -92,6 +92,10 @@
   }
 </script>
 
+<svelte:head>
+  <title>Chat | Nanban</title>
+</svelte:head>
+
 <div class="p-6">
   <div class="grid h-[calc(100dvh-6rem)] grid-cols-1 gap-4 lg:grid-cols-[320px_1fr]">
     <!-- Inbox list -->

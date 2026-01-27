@@ -150,6 +150,10 @@
   const canSave = $derived(name.trim().length > 0 && projectSlug.trim().length > 0 && isSlugValid && !isSaving);
 </script>
 
+<svelte:head>
+  <title>Settings - {page.params.slug} | Nanban</title>
+</svelte:head>
+
 <div class="space-y-6 p-6">
   <div>
     <h1 class="text-2xl font-semibold">Project Settings</h1>

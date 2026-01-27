@@ -52,6 +52,10 @@
   }
 </script>
 
+<svelte:head>
+  <title>Wiki - {page.params.slug} | Nanban</title>
+</svelte:head>
+
 <div class="space-y-4 p-6">
   <div>
     <h1 class="text-2xl font-semibold">Wiki</h1>
