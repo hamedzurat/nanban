@@ -267,6 +267,10 @@
   }
 </script>
 
+<svelte:head>
+  <title>All Tasks - {page.params.slug} | Nanban</title>
+</svelte:head>
+
 <div class="space-y-4 p-6">
   <div class="flex flex-wrap items-start justify-between gap-4">
     <div>

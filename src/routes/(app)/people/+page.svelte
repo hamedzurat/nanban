@@ -63,6 +63,10 @@
   }
 </script>
 
+<svelte:head>
+  <title>People | Nanban</title>
+</svelte:head>
+
 <div class="space-y-4 p-6">
   <div class="flex items-start justify-between gap-4">
     <div>

@@ -97,6 +97,10 @@
   }
 </script>
 
+<svelte:head>
+  <title>New Task - {page.params.slug} | Nanban</title>
+</svelte:head>
+
 <div class="grid h-full gap-6 p-6 lg:grid-cols-2">
   <!-- Left: Form -->
   <Card.Root class="flex h-full flex-col overflow-auto">

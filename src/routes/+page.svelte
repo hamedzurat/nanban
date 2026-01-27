@@ -63,6 +63,10 @@
   }
 </script>
 
+<svelte:head>
+  <title>Demo Access | Nanban</title>
+</svelte:head>
+
 <div class="mx-auto max-w-2xl px-6 py-12">
   <header class="mb-8 space-y-4">
     <div class="flex items-center justify-between gap-3">

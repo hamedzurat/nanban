@@ -78,6 +78,10 @@
   }
 </script>
 
+<svelte:head>
+  <title>{w.data?.title ?? 'Wiki Page'} | Nanban</title>
+</svelte:head>
+
 <div class="space-y-4 p-6">
   {#if w.isLoading}
     <div class="h-64 animate-pulse rounded-lg bg-muted/20"></div>

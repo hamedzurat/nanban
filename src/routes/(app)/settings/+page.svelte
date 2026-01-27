@@ -52,6 +52,10 @@
   }
 </script>
 
+<svelte:head>
+  <title>Settings | Nanban</title>
+</svelte:head>
+
 <div class="container mx-auto max-w-2xl space-y-6 py-10">
   <Card>
     <CardHeader>

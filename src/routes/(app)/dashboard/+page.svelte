@@ -18,6 +18,10 @@
   }
 </script>
 
+<svelte:head>
+  <title>Dashboard | Nanban</title>
+</svelte:head>
+
 <div class="mx-auto max-w-6xl space-y-8 p-8">
   <!-- Header -->
   <div>

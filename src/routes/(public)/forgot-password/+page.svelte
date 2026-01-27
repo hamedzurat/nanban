@@ -9,6 +9,10 @@
   let email = $state('');
 </script>
 
+<svelte:head>
+  <title>Forgot Password | Nanban</title>
+</svelte:head>
+
 <div class="flex min-h-dvh items-center justify-center p-6">
   <Card.Root class="w-full max-w-md">
     <Card.Header>
