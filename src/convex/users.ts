@@ -29,3 +29,23 @@ export const create = mutation({
     return await ctx.db.insert('users', args);
   },
 });
+
+export const update = mutation({
+  args: {
+    id: v.id('users'),
+    name: v.optional(v.string()),
+    avatarURL: v.optional(v.string()),
+  },
+  handler: async (ctx, { id, ...updates }) => {
+    const existing = await ctx.db.get(id);
+    if (!existing) throw new Error('User not found');
+
+    const filteredUpdates = Object.fromEntries(Object.entries(updates).filter(([_, value]) => value !== undefined));
+
+    if (Object.keys(filteredUpdates).length > 0) {
+      await ctx.db.patch(id, filteredUpdates);
+    }
+
+    return await ctx.db.get(id);
+  },
+});

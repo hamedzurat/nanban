@@ -12,6 +12,7 @@
   import { ScrollArea } from '$lib/components/ui/scroll-area/index.js';
   import { Skeleton } from '$lib/components/ui/skeleton/index.js';
   import { api, type Id } from '$lib/convex/api';
+  import { session } from '$lib/session';
 
   const client = useConvexClient();
 
@@ -21,6 +22,18 @@
     orgSlug: 'nanban',
     projectSlug: projectSlug(),
   }));
+
+  const membersQ = useQuery(api.projects.membersBySlug, () => ({
+    orgSlug: 'nanban',
+    projectSlug: projectSlug(),
+  }));
+
+  // Check if user is a member of this project
+  function isMember() {
+    if (!$session) return false;
+    const members = membersQ.data?.members ?? [];
+    return members.some((m) => m._id === $session.userId);
+  }
 
   const columns = [
     { key: 'backlog', label: 'Backlog' },
@@ -54,6 +67,14 @@
 
   async function toggleUrgent(taskID: Id<'tasks'>, current: boolean) {
     await client.mutation(api.tasks.update, { taskID, isUrgent: !current });
+  }
+
+  async function deleteTask(taskID: Id<'tasks'>) {
+    await client.mutation(api.tasks.remove, { taskID });
+  }
+
+  async function reassignTask(taskID: Id<'tasks'>, assigneeID: Id<'users'>) {
+    await client.mutation(api.tasks.update, { taskID, assigneeID });
   }
 </script>
 
@@ -158,27 +179,53 @@
 
                     <ContextMenu.Content>
                       <ContextMenu.Label>Actions</ContextMenu.Label>
-                      <ContextMenu.Separator />
+                      {#if !isMember()}
+                        <ContextMenu.Item disabled>View only</ContextMenu.Item>
+                      {:else}
+                        <ContextMenu.Separator />
 
-                      <ContextMenu.Sub>
-                        <ContextMenu.SubTrigger>Move to</ContextMenu.SubTrigger>
-                        <ContextMenu.SubContent>
-                          {#each columns as s (s.key)}
-                            <ContextMenu.Item onclick={() => setStatus(t._id, s.key)}>
-                              {s.label}
-                            </ContextMenu.Item>
-                          {/each}
-                        </ContextMenu.SubContent>
-                      </ContextMenu.Sub>
+                        <ContextMenu.Sub>
+                          <ContextMenu.SubTrigger>Move to</ContextMenu.SubTrigger>
+                          <ContextMenu.SubContent>
+                            {#each columns as s (s.key)}
+                              <ContextMenu.Item onclick={() => setStatus(t._id, s.key)}>
+                                {s.label}
+                              </ContextMenu.Item>
+                            {/each}
+                          </ContextMenu.SubContent>
+                        </ContextMenu.Sub>
 
-                      <ContextMenu.Separator />
+                        <ContextMenu.Sub>
+                          <ContextMenu.SubTrigger>Reassign</ContextMenu.SubTrigger>
+                          <ContextMenu.SubContent>
+                            {#if membersQ.isLoading}
+                              <ContextMenu.Item disabled>Loading...</ContextMenu.Item>
+                            {:else if (membersQ.data?.members?.length ?? 0) === 0}
+                              <ContextMenu.Item disabled>No members</ContextMenu.Item>
+                            {:else}
+                              {#each membersQ.data?.members ?? [] as member (member._id)}
+                                <ContextMenu.Item onclick={() => reassignTask(t._id, member._id)}>
+                                  {member.name}
+                                </ContextMenu.Item>
+                              {/each}
+                            {/if}
+                          </ContextMenu.SubContent>
+                        </ContextMenu.Sub>
 
-                      <ContextMenu.Item onclick={() => toggleImportant(t._id, t.isImportant)}>
-                        {t.isImportant ? 'Unmark important' : 'Mark important'}
-                      </ContextMenu.Item>
-                      <ContextMenu.Item onclick={() => toggleUrgent(t._id, t.isUrgent)}>
-                        {t.isUrgent ? 'Unmark urgent' : 'Mark urgent'}
-                      </ContextMenu.Item>
+                        <ContextMenu.Separator />
+
+                        <ContextMenu.Item onclick={() => toggleImportant(t._id, t.isImportant)}>
+                          {t.isImportant ? 'Unmark important' : 'Mark important'}
+                        </ContextMenu.Item>
+                        <ContextMenu.Item onclick={() => toggleUrgent(t._id, t.isUrgent)}>
+                          {t.isUrgent ? 'Unmark urgent' : 'Mark urgent'}
+                        </ContextMenu.Item>
+
+                        <ContextMenu.Separator />
+                        <ContextMenu.Item class="text-destructive" onclick={() => deleteTask(t._id)}>
+                          Delete task
+                        </ContextMenu.Item>
+                      {/if}
                     </ContextMenu.Content>
                   </ContextMenu.Root>
                 {/each}

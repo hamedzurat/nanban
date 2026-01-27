@@ -74,6 +74,19 @@
       : 'skip',
   );
 
+  // Query project members for reassign dropdown
+  const membersQ = useQuery(api.projects.membersBySlug, () => ({
+    orgSlug: ORG,
+    projectSlug: projectSlug(),
+  }));
+
+  // Check if user is a member of this project
+  function isMember() {
+    if (!$session) return false;
+    const members = membersQ.data?.members ?? [];
+    return members.some((m) => m._id === $session.userId);
+  }
+
   function getQ(k: Quad) {
     return k === 'do' ? doQ : k === 'decide' ? decideQ : k === 'delegate' ? delegateQ : deleteQ;
   }
@@ -104,6 +117,12 @@
   async function toggleUrgent(taskID: any, cur: boolean) {
     await client.mutation(api.tasks.update, { taskID, isUrgent: !cur });
   }
+  async function deleteTask(taskID: any) {
+    await client.mutation(api.tasks.remove, { taskID });
+  }
+  async function reassignTask(taskID: any, assigneeID: any) {
+    await client.mutation(api.tasks.update, { taskID, assigneeID });
+  }
 </script>
 
 <div class="space-y-4 p-6">
@@ -122,80 +141,117 @@
     </div>
   </div>
 
-  <div class="grid gap-4 lg:grid-cols-2">
-    {#each quads as quad (quad.key)}
-      {@const rq = getQ(quad.key)}
-      <Card.Root class="min-h-72">
+  {#if !membersQ.isLoading && membersQ.data?.project && !isMember()}
+    <div class="flex min-h-[60vh] items-center justify-center">
+      <Card.Root class="w-full max-w-xl text-center">
         <Card.Header>
-          <Card.Title class="flex items-center justify-between">
-            <span>{quad.title}</span>
-            <Badge variant="secondary">{fuzzy(rq.data?.tasks ?? []).length}</Badge>
-          </Card.Title>
-          <Card.Description>{quad.subtitle}</Card.Description>
+          <Card.Title class="text-destructive">Access denied</Card.Title>
+          <Card.Description>
+            You are not a member of this project. Contact a project admin to request access.
+          </Card.Description>
         </Card.Header>
-
-        <Card.Content class="space-y-2">
-          {#if rq.isLoading}
-            <div class="space-y-2">
-              <Skeleton class="h-12 w-full" />
-              <Skeleton class="h-12 w-full" />
-              <Skeleton class="h-12 w-full" />
-            </div>
-          {:else if rq.error}
-            <div class="text-sm text-destructive">{rq.error.toString()}</div>
-          {:else if (rq.data?.tasks?.length ?? 0) === 0}
-            <div class="text-sm text-muted-foreground">No tasks here.</div>
-          {:else}
-            <div class="space-y-2">
-              {#each fuzzy(rq.data?.tasks ?? []) as t (t._id)}
-                <ContextMenu.Root>
-                  <ContextMenu.Trigger>
-                    <TaskHoverCard
-                      title={t.title}
-                      description={t.description}
-                      status={t.status}
-                      isImportant={t.isImportant}
-                      isUrgent={t.isUrgent}
-                    >
-                      <div class="cursor-default rounded-md border p-3 transition hover:bg-accent/40">
-                        <div class="flex items-start justify-between gap-2">
-                          <span class="line-clamp-2 leading-snug font-medium">{t.title}</span>
-                          <Badge variant="outline">{t.status}</Badge>
-                          {formatDistanceToNow(t.completeBy, { addSuffix: true })}
-                        </div>
-                      </div>
-                    </TaskHoverCard>
-                  </ContextMenu.Trigger>
-
-                  <ContextMenu.Content>
-                    <ContextMenu.Label>Actions</ContextMenu.Label>
-                    <ContextMenu.Separator />
-
-                    <ContextMenu.Sub>
-                      <ContextMenu.SubTrigger>Status</ContextMenu.SubTrigger>
-                      <ContextMenu.SubContent>
-                        <ContextMenu.Item onclick={() => setStatus(t._id, 'backlog')}>Backlog</ContextMenu.Item>
-                        <ContextMenu.Item onclick={() => setStatus(t._id, 'todo')}>Todo</ContextMenu.Item>
-                        <ContextMenu.Item onclick={() => setStatus(t._id, 'in-progress')}>In progress</ContextMenu.Item>
-                        <ContextMenu.Item onclick={() => setStatus(t._id, 'done')}>Done</ContextMenu.Item>
-                        <ContextMenu.Item onclick={() => setStatus(t._id, 'canceled')}>Canceled</ContextMenu.Item>
-                      </ContextMenu.SubContent>
-                    </ContextMenu.Sub>
-
-                    <ContextMenu.Separator />
-                    <ContextMenu.Item onclick={() => toggleImportant(t._id, t.isImportant)}>
-                      {t.isImportant ? 'Unmark important' : 'Mark important'}
-                    </ContextMenu.Item>
-                    <ContextMenu.Item onclick={() => toggleUrgent(t._id, t.isUrgent)}>
-                      {t.isUrgent ? 'Unmark urgent' : 'Mark urgent'}
-                    </ContextMenu.Item>
-                  </ContextMenu.Content>
-                </ContextMenu.Root>
-              {/each}
-            </div>
-          {/if}
-        </Card.Content>
       </Card.Root>
-    {/each}
-  </div>
+    </div>
+  {:else}
+    <div class="grid gap-4 lg:grid-cols-2">
+      {#each quads as quad (quad.key)}
+        {@const rq = getQ(quad.key)}
+        <Card.Root class="min-h-72">
+          <Card.Header>
+            <Card.Title class="flex items-center justify-between">
+              <span>{quad.title}</span>
+              <Badge variant="secondary">{fuzzy(rq.data?.tasks ?? []).length}</Badge>
+            </Card.Title>
+            <Card.Description>{quad.subtitle}</Card.Description>
+          </Card.Header>
+
+          <Card.Content class="space-y-2">
+            {#if rq.isLoading}
+              <div class="space-y-2">
+                <Skeleton class="h-12 w-full" />
+                <Skeleton class="h-12 w-full" />
+                <Skeleton class="h-12 w-full" />
+              </div>
+            {:else if rq.error}
+              <div class="text-sm text-destructive">{rq.error.toString()}</div>
+            {:else if (rq.data?.tasks?.length ?? 0) === 0}
+              <div class="text-sm text-muted-foreground">No tasks here.</div>
+            {:else}
+              <div class="space-y-2">
+                {#each fuzzy(rq.data?.tasks ?? []) as t (t._id)}
+                  <ContextMenu.Root>
+                    <ContextMenu.Trigger>
+                      <TaskHoverCard
+                        title={t.title}
+                        description={t.description}
+                        status={t.status}
+                        isImportant={t.isImportant}
+                        isUrgent={t.isUrgent}
+                      >
+                        <div class="cursor-default rounded-md border p-3 transition hover:bg-accent/40">
+                          <div class="flex items-start justify-between gap-2">
+                            <span class="line-clamp-2 leading-snug font-medium">{t.title}</span>
+                            <Badge variant="outline">{t.status}</Badge>
+                            {formatDistanceToNow(t.completeBy, { addSuffix: true })}
+                          </div>
+                        </div>
+                      </TaskHoverCard>
+                    </ContextMenu.Trigger>
+
+                    <ContextMenu.Content>
+                      <ContextMenu.Label>Actions</ContextMenu.Label>
+                      <ContextMenu.Separator />
+
+                      <ContextMenu.Sub>
+                        <ContextMenu.SubTrigger>Status</ContextMenu.SubTrigger>
+                        <ContextMenu.SubContent>
+                          <ContextMenu.Item onclick={() => setStatus(t._id, 'backlog')}>Backlog</ContextMenu.Item>
+                          <ContextMenu.Item onclick={() => setStatus(t._id, 'todo')}>Todo</ContextMenu.Item>
+                          <ContextMenu.Item onclick={() => setStatus(t._id, 'in-progress')}
+                            >In progress</ContextMenu.Item
+                          >
+                          <ContextMenu.Item onclick={() => setStatus(t._id, 'done')}>Done</ContextMenu.Item>
+                          <ContextMenu.Item onclick={() => setStatus(t._id, 'canceled')}>Canceled</ContextMenu.Item>
+                        </ContextMenu.SubContent>
+                      </ContextMenu.Sub>
+
+                      <ContextMenu.Sub>
+                        <ContextMenu.SubTrigger>Reassign</ContextMenu.SubTrigger>
+                        <ContextMenu.SubContent>
+                          {#if membersQ.isLoading}
+                            <ContextMenu.Item disabled>Loading...</ContextMenu.Item>
+                          {:else if (membersQ.data?.members?.length ?? 0) === 0}
+                            <ContextMenu.Item disabled>No members</ContextMenu.Item>
+                          {:else}
+                            {#each membersQ.data?.members ?? [] as member (member._id)}
+                              <ContextMenu.Item onclick={() => reassignTask(t._id, member._id)}>
+                                {member.name}
+                              </ContextMenu.Item>
+                            {/each}
+                          {/if}
+                        </ContextMenu.SubContent>
+                      </ContextMenu.Sub>
+
+                      <ContextMenu.Separator />
+                      <ContextMenu.Item onclick={() => toggleImportant(t._id, t.isImportant)}>
+                        {t.isImportant ? 'Unmark important' : 'Mark important'}
+                      </ContextMenu.Item>
+                      <ContextMenu.Item onclick={() => toggleUrgent(t._id, t.isUrgent)}>
+                        {t.isUrgent ? 'Unmark urgent' : 'Mark urgent'}
+                      </ContextMenu.Item>
+
+                      <ContextMenu.Separator />
+                      <ContextMenu.Item class="text-destructive" onclick={() => deleteTask(t._id)}>
+                        Delete task
+                      </ContextMenu.Item>
+                    </ContextMenu.Content>
+                  </ContextMenu.Root>
+                {/each}
+              </div>
+            {/if}
+          </Card.Content>
+        </Card.Root>
+      {/each}
+    </div>
+  {/if}
 </div>

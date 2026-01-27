@@ -201,6 +201,16 @@
                 <span>Wiki</span>
               </Sidebar.MenuButton>
             </Sidebar.MenuItem>
+
+            <Sidebar.MenuItem>
+              <Sidebar.MenuButton
+                isActive={active(projectHref(projectSlug()!, 'settings'))}
+                onclick={() => nav(projectHref(projectSlug()!, 'settings'))}
+              >
+                <Settings class="size-4" />
+                <span>Settings</span>
+              </Sidebar.MenuButton>
+            </Sidebar.MenuItem>
           </Sidebar.Menu>
         </Sidebar.GroupContent>
       </Sidebar.Group>
